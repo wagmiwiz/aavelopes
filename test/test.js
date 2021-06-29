@@ -1,7 +1,8 @@
-
-const {BigNumber} = require('ethers');
+const hre = require("hardhat");
 const {loadFixture} = require('ethereum-waffle');
 const {expect} = require('chai');
+
+const ethers = hre.ethers;
 
 const erc20abi = [
     // Some details about the token
@@ -52,31 +53,35 @@ describe('RedAavelopes', function () {
 
         return {nftContract, daiContract, aDaiContract};
     }
-    it('Basic NFT checks', async function () {
+    it('All the tests', async function () {
         const [owner, addr1, addr2] = await ethers.getSigners();
 
         const {nftContract, daiContract, aDaiContract} = await loadFixture(fixture);
+
         expect(nftContract).to.not.be.equal(null);
 
         const daiAmount = ethers.utils.parseUnits("1000", 18);
 
         await daiContract.connect(owner).approve(nftContract.address, daiAmount);
-        await nftContract.mintWithDai(daiAmount);
+        await nftContract.mintWithDai(daiAmount, Math.floor(new Date().getTime() / 1000) + 14778800);
 
-        await  expect(nftContract.ownerOf(0)).to.be.revertedWith("ERC721: owner query for nonexistent token");
-        expect(await nftContract.ownerOf(1)).to.be.equal(owner.address);
+        expect(await nftContract.ownerOf(0)).to.be.equal(owner.address);
 
         // Check aDai is correct
         expect(await daiContract.balanceOf(nftContract.address)).to.be.equal(0);
         expect(await daiContract.balanceOf(owner.address)).to.be.equal(dai.sub(daiAmount));
         expect(await aDaiContract.balanceOf(nftContract.address)).to.be.equal(daiAmount);
 
-        //Burn
-        await nftContract.burn(1);
-        expect(await daiContract.balanceOf(nftContract.address)).to.be.equal(0);
-        expect(await daiContract.balanceOf(owner.address)).to.be.equal(dai);
-        expect(await aDaiContract.balanceOf(nftContract.address)).to.be.equal(0);
+        // Make time pass hah
+        await hre.network.provider.send("evm_increaseTime", [15778800]);
+        await hre.network.provider.send("evm_mine");
 
+        // console.log(await nftContract.getSvg(0));
+
+        // Burn
+        await nftContract.burn(0);
+        expect(await daiContract.balanceOf(nftContract.address)).to.be.equal(0);
+        expect(await daiContract.balanceOf(owner.address)).to.be.equal(dai.add(ethers.utils.parseUnits("10", 18))); // original + 10 for interest yay!
     });
 
 });
