@@ -94,25 +94,27 @@ export function useContract(
 
 
 function ViewAavelope() {
-    const contract = useContract('0x70e0bA845a1A0F2DA3359C97E0285013525FFC49', abi, true);
+    const contract = useContract('0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00', abi, true);
     const web3React = useWeb3React();
     const [svg, setSvg] = useState();
     const [unlockTimestamp, setUnlockTimestamp] = useState();
+    const [currentAmount, setCurrentAmount] = useState();
     const [lockedAmount, setLockedAmount] = useState();
     console.log(contract);
 
     useEffect(() => {
         async function fetch() {
-            const [svg, unlockTimestamp, lockedAmount] = await Promise.all([contract.getSvg(0), contract.getUnlockTimestamp(0), contract.getBalance(0)]);
+            const [svg, unlockTimestamp, currentAmount, lockedAmount] = await Promise.all([contract.getSvg(0), contract.getUnlockTimestamp(0), contract.getAmountAsOfNow(0), contract.getOriginalAmount(0)]);
             setSvg(svg);
             setUnlockTimestamp(unlockTimestamp);
+            setCurrentAmount(currentAmount);
             setLockedAmount(lockedAmount);
         }
 
         if (contract) fetch();
     }, [contract]);
 
-    if (!svg || !unlockTimestamp || !lockedAmount) {
+    if (!svg || !unlockTimestamp || !lockedAmount || !currentAmount) {
         return null;
     }
     return <VStack maxWidth={"80%"} flexDirection={"column"} alignItems={"center"} p={4} spacing={8}>
@@ -128,8 +130,12 @@ function ViewAavelope() {
                     <Td><Badge colorScheme="purple" p={1}>{DateTime.fromSeconds(unlockTimestamp.toNumber()).toRelative()}</Badge></Td>
                 </Tr>
                 <Tr>
-                    <Td>Locked amount</Td>
-                    <Td><Badge colorScheme="green" p={1}>{formatUnits(lockedAmount, 18) } DAI</Badge> </Td>
+                    <Td>Original amount</Td>
+                    <Td><Badge colorScheme="green" p={1}>{Math.round(parseFloat(formatUnits(lockedAmount, 18))) } DAI</Badge> </Td>
+                </Tr>
+                <Tr>
+                    <Td>Accrued amount</Td>
+                    <Td><Badge colorScheme="green" p={1}>{Math.round(parseFloat(formatUnits(currentAmount, 18))) } DAI</Badge> </Td>
                 </Tr>
                 <Tr>
                     <Td>Amount at unlock (approx)</Td>

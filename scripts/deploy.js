@@ -51,9 +51,14 @@ async function mint(nftInstance) {
 
     // mint it
     await daiContract.connect(owner).approve(nftInstance.address, daiAmount);
-    await nftInstance.mintWithDai(daiAmount, Math.floor(new Date().getTime() / 1000) + 504921600);
+    await nftInstance.mintWithDai(daiAmount, Math.floor(new Date().getTime() / 1000) + 315576000);
 
     console.log("Owner of 0: " + await nftInstance.ownerOf(0));
+
+    await hre.network.provider.send("evm_increaseTime", [63115200]); // 2 years pass
+    await hre.network.provider.send("evm_mine");
+
+    console.log("Advanced by two years...")
 
     return nftInstance
 }

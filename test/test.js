@@ -1,4 +1,5 @@
 const hre = require("hardhat");
+const {BigNumber} = require('ethers');
 const {loadFixture} = require('ethereum-waffle');
 const {expect} = require('chai');
 
@@ -73,7 +74,7 @@ describe('RedAavelopes', function () {
         expect(await aDaiContract.balanceOf(nftContract.address)).to.be.equal(daiAmount);
 
         // Make time pass hah
-        await hre.network.provider.send("evm_increaseTime", [15778800]);
+        await hre.network.provider.send("evm_increaseTime", [315576000]); // 10 years pass
         await hre.network.provider.send("evm_mine");
 
         // console.log(await nftContract.getSvg(0));
@@ -81,7 +82,7 @@ describe('RedAavelopes', function () {
         // Burn
         await nftContract.burn(0);
         expect(await daiContract.balanceOf(nftContract.address)).to.be.equal(0);
-        expect(await daiContract.balanceOf(owner.address)).to.be.equal(dai.add(ethers.utils.parseUnits("10", 18))); // original + 10 for interest yay!
+        expect(parseInt(ethers.utils.formatEther(await daiContract.balanceOf(owner.address)))).to.be.approximately(10236, 2); // original + 10yr interest yay!
     });
 
 });
